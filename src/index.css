@@ -1,0 +1,129 @@
+@import 'react-toastify/dist/ReactToastify.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-display {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Toast customization */
+.Toastify__toast-container {
+  width: auto;
+  max-width: 420px;
+  padding: 0;
+}
+
+.Toastify__toast {
+  border-radius: 12px;
+  padding: 16px 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.Toastify__toast--success {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  color: white;
+}
+
+.Toastify__toast--info {
+  background: linear-gradient(135deg, #5B5FDE, #4F46E5);
+  color: white;
+}
+
+.Toastify__toast--warning {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: white;
+}
+
+.Toastify__progress-bar {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.Toastify__close-button {
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 1;
+}
+
+.Toastify__close-button:hover {
+  color: white;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Priority indicators */
+.priority-high {
+  border-left: 4px solid #EF4444;
+}
+
+.priority-medium {
+  border-left: 4px solid #F59E0B;
+}
+
+.priority-low {
+  border-left: 4px solid #10B981;
+}
+
+/* Completion animation */
+@keyframes checkmark {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.checkmark-animation {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: checkmark 0.3s ease-in-out forwards;
+}
+
+/* Drag and drop styles */
+.drag-over {
+  background: linear-gradient(135deg, rgba(91, 95, 222, 0.05), rgba(139, 92, 246, 0.05));
+  border: 2px dashed #5B5FDE;
+}
+
+.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
