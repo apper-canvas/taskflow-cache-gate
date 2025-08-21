@@ -1,40 +1,36 @@
-import React, { useRef, useEffect } from "react";
-import Button from "@/components/atoms/Button";
+import React, { useEffect, useRef, useState } from "react";
 import ApperIcon from "@/components/ApperIcon";
+import Button from "@/components/atoms/Button";
 import { cn } from "@/utils/cn";
 
-const TaskFilters = ({ 
+function TaskFilters({ 
   activeFilter, 
   onFilterChange, 
   className,
-  showCounts = true,
-  counts = {}
-}) => {
-const filters = [
-    { key: "all", label: "All Tasks", icon: "List" },
-    { key: "active", label: "Active", icon: "Circle" },
-    { key: "completed", label: "Completed", icon: "CheckCircle" },
-    { key: "overdue", label: "Overdue", icon: "AlertCircle" }
-  ];
+  ariaLabel = "Task filters"
+}) {
+const filterRefs = useRef({})
+  const [focusedIndex, setFocusedIndex] = useState(0)
 
-  const filterRefs = useRef([]);
-  const [focusedIndex, setFocusedIndex] = React.useState(0);
+  const filters = [
+    { key: 'all', label: 'All Tasks', icon: 'list' },
+    { key: 'pending', label: 'Pending', icon: 'clock' },
+    { key: 'completed', label: 'Completed', icon: 'check' }
+  ]
 
-  const handleKeyDown = (e, index) => {
+  // Handle keyboard navigation
+  function handleKeyDown(e, index) {
     switch (e.key) {
-      case 'ArrowRight':
-      case 'ArrowDown':
-        e.preventDefault();
-        const nextIndex = (index + 1) % filters.length;
-        setFocusedIndex(nextIndex);
-        filterRefs.current[nextIndex]?.focus();
-        break;
       case 'ArrowLeft':
-      case 'ArrowUp':
-        e.preventDefault();
-        const prevIndex = index === 0 ? filters.length - 1 : index - 1;
-        setFocusedIndex(prevIndex);
-        filterRefs.current[prevIndex]?.focus();
+      case 'ArrowRight':
+        e.preventDefault()
+        const direction = e.key === 'ArrowRight' ? 1 : -1
+        const newIndex = (index + direction + filters.length) % filters.length
+        
+        setFocusedIndex(newIndex)
+        
+        // Focus the new element
+        filterRefs.current[newIndex]?.focus()
         break;
       case 'Enter':
       case ' ':
@@ -46,8 +42,8 @@ const filters = [
 
   return (
 <div className={cn("flex flex-wrap gap-2", className)} role="toolbar" aria-label="Task filters">
-      {filters.map((filter) => (
-<Button
+{filters.map((filter, index) => (
+        <Button
           key={filter.key}
           ref={(el) => (filterRefs.current[index] = el)}
           variant={activeFilter === filter.key ? "primary" : "ghost"}
@@ -60,18 +56,8 @@ const filters = [
           aria-pressed={activeFilter === filter.key}
           aria-label={`Filter by ${filter.label}`}
         >
-          <ApperIcon name={filter.icon} size={14} />
+<ApperIcon name={filter.icon} size={14} />
           {filter.label}
-          {showCounts && counts[filter.key] !== undefined && (
-            <span className={cn(
-              "ml-1 px-1.5 py-0.5 text-xs rounded-full",
-              activeFilter === filter.key 
-                ? "bg-white/20 text-white" 
-                : "bg-gray-100 text-gray-600"
-            )}>
-              {counts[filter.key]}
-            </span>
-          )}
         </Button>
       ))}
     </div>
