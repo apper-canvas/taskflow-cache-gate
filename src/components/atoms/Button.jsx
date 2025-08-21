@@ -9,7 +9,7 @@ const Button = forwardRef(({
   disabled = false,
   ...props 
 }, ref) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]";
+const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] focus:z-10";
   
   const variants = {
     primary: "bg-gradient-to-r from-primary to-primary/90 text-white hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl focus:ring-primary/50",
@@ -27,11 +27,21 @@ const Button = forwardRef(({
     xl: "px-8 py-4 text-lg"
   };
   
+const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      if (!disabled && props.onClick) {
+        e.preventDefault();
+        props.onClick(e);
+      }
+    }
+  };
+
   return (
     <button
       ref={ref}
       className={cn(baseStyles, variants[variant], sizes[size], className)}
       disabled={disabled}
+      onKeyDown={handleKeyDown}
       {...props}
     >
       {children}

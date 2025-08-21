@@ -125,5 +125,82 @@ body {
 
 .dragging {
   opacity: 0.5;
-  transform: rotate(5deg);
+transform: rotate(5deg);
+}
+
+/* Keyboard navigation styles */
+.keyboard-nav *:focus {
+  outline: none;
+}
+
+/* Enhanced focus indicators */
+.focus-visible:focus-visible {
+  outline: 2px solid #5B5FDE;
+  outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #5B5FDE;
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+  transition: top 0.3s ease;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Task card keyboard focus */
+.task-card-focused {
+  box-shadow: 0 0 0 3px rgba(91, 95, 222, 0.3);
+}
+
+/* Category navigation indicators */
+.category-nav-active {
+  position: relative;
+}
+
+.category-nav-active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: #5B5FDE;
+  border-radius: 2px;
+}
+
+/* Modal focus trap */
+.modal-focus-trap {
+  position: relative;
+  z-index: 1000;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .focus-visible:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 3px;
+  }
+  
+  .task-card-focused {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .focus-visible:focus-visible,
+  .task-card-focused {
+    transition: none;
+  }
 }

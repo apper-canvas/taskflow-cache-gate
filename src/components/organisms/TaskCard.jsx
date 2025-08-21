@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { cn } from "@/utils/cn";
 import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
 import Card from "@/components/atoms/Card";
@@ -15,10 +15,17 @@ const TaskCard = ({
   onDelete,
   className,
   isDragging = false,
+  tabIndex = 0,
+  onKeyNavigation,
   ...props 
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
+const [isHovered, setIsHovered] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const cardRef = useRef(null);
+  const editButtonRef = useRef(null);
+  const deleteButtonRef = useRef(null);
+  const checkboxRef = useRef(null);
 
   const handleComplete = () => {
     if (!task.completed) {
@@ -26,6 +33,44 @@ const TaskCard = ({
       setTimeout(() => setShowConfetti(false), 500);
     }
     onToggleComplete(task.Id);
+  };
+
+  const handleKeyDown = (e) => {
+    switch (e.key) {
+      case 'Enter':
+      case ' ':
+        if (e.target === cardRef.current) {
+          e.preventDefault();
+          handleComplete();
+        }
+        break;
+      case 'e':
+      case 'E':
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          onEdit(task);
+        }
+        break;
+      case 'Delete':
+      case 'Backspace':
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          onDelete(task.Id);
+        }
+        break;
+      case 'ArrowUp':
+      case 'ArrowDown':
+      case 'ArrowLeft':
+      case 'ArrowRight':
+        if (onKeyNavigation) {
+          e.preventDefault();
+          onKeyNavigation(e.key, task.Id);
+        }
+        break;
+      case 'Tab':
+        // Allow natural tab navigation within card
+        break;
+    }
   };
 
   const formatDueDate = (dateString) => {
@@ -59,19 +104,28 @@ const TaskCard = ({
 
   const priority = priorityConfig[task.priority] || priorityConfig.medium;
 
-  return (
+return (
     <Card
+      ref={cardRef}
       className={cn(
-        "group relative overflow-hidden transition-all duration-200",
+        "group relative overflow-hidden transition-all duration-200 cursor-pointer",
         `priority-${task.priority}`,
         task.completed && "opacity-60",
         isDragging && "dragging",
-        isHovered && !task.completed && "shadow-lg hover:shadow-primary/10",
+        (isHovered || isFocused) && !task.completed && "shadow-lg hover:shadow-primary/10",
+        isFocused && "ring-2 ring-primary/50 ring-offset-2",
         showConfetti && "animate-bounce-in",
         className
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      onKeyDown={handleKeyDown}
+      tabIndex={tabIndex}
+      role="button"
+      aria-label={`Task: ${task.title}. ${task.completed ? 'Completed' : 'Not completed'}. Priority: ${task.priority}. ${task.dueDate ? `Due: ${formatDueDate(task.dueDate)}` : 'No due date'}`}
+      aria-pressed={task.completed}
       {...props}
     >
       {/* Confetti effect */}
@@ -99,10 +153,13 @@ const TaskCard = ({
       <div className="p-4">
         <div className="flex items-start gap-3">
           <div className="pt-0.5">
-            <Checkbox
+<Checkbox
+              ref={checkboxRef}
               checked={task.completed}
               onChange={handleComplete}
-              className="transition-transform hover:scale-110"
+              className="transition-transform hover:scale-110 focus:ring-2 focus:ring-primary/50"
+              tabIndex={-1}
+              aria-label={`Mark task "${task.title}" as ${task.completed ? 'incomplete' : 'complete'}`}
             />
           </div>
           
@@ -115,20 +172,35 @@ const TaskCard = ({
                 {task.title}
               </h3>
               
-              <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<div className={cn(
+                "flex items-center gap-1 ml-2 transition-opacity",
+                (isHovered || isFocused) ? "opacity-100" : "opacity-0"
+              )}>
                 <Button
+                  ref={editButtonRef}
                   variant="ghost"
                   size="sm"
-                  onClick={() => onEdit(task)}
-                  className="p-1.5 hover:bg-primary/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(task);
+                  }}
+                  className="p-1.5 hover:bg-primary/10 focus:bg-primary/10 focus:ring-2 focus:ring-primary/50"
+                  tabIndex={-1}
+                  aria-label={`Edit task "${task.title}"`}
                 >
                   <ApperIcon name="Edit2" size={14} />
                 </Button>
                 <Button
+                  ref={deleteButtonRef}
                   variant="ghost"
                   size="sm"
-                  onClick={() => onDelete(task.Id)}
-                  className="p-1.5 hover:bg-red-50 hover:text-red-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(task.Id);
+                  }}
+                  className="p-1.5 hover:bg-red-50 hover:text-red-600 focus:bg-red-50 focus:text-red-600 focus:ring-2 focus:ring-red-500/50"
+                  tabIndex={-1}
+                  aria-label={`Delete task "${task.title}"`}
                 >
                   <ApperIcon name="Trash2" size={14} />
                 </Button>

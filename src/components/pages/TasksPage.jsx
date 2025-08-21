@@ -169,9 +169,17 @@ const TasksPage = () => {
         "fixed inset-0 z-40 lg:hidden transition-opacity duration-300",
         isMobileSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
       )}>
-        <div 
+<div 
           className="fixed inset-0 bg-black/50 backdrop-blur-sm"
           onClick={() => setIsMobileSidebarOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setIsMobileSidebarOpen(false);
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label="Close sidebar"
         />
         <div className={cn(
           "fixed left-0 top-0 bottom-0 w-80 bg-white transform transition-transform duration-300",

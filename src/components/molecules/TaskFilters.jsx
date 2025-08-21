@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import Button from "@/components/atoms/Button";
 import ApperIcon from "@/components/ApperIcon";
 import { cn } from "@/utils/cn";
@@ -10,22 +10,55 @@ const TaskFilters = ({
   showCounts = true,
   counts = {}
 }) => {
-  const filters = [
+const filters = [
     { key: "all", label: "All Tasks", icon: "List" },
     { key: "active", label: "Active", icon: "Circle" },
     { key: "completed", label: "Completed", icon: "CheckCircle" },
     { key: "overdue", label: "Overdue", icon: "AlertCircle" }
   ];
 
+  const filterRefs = useRef([]);
+  const [focusedIndex, setFocusedIndex] = React.useState(0);
+
+  const handleKeyDown = (e, index) => {
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        e.preventDefault();
+        const nextIndex = (index + 1) % filters.length;
+        setFocusedIndex(nextIndex);
+        filterRefs.current[nextIndex]?.focus();
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        e.preventDefault();
+        const prevIndex = index === 0 ? filters.length - 1 : index - 1;
+        setFocusedIndex(prevIndex);
+        filterRefs.current[prevIndex]?.focus();
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        onFilterChange(filters[index].key);
+        break;
+    }
+  };
+
   return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
+<div className={cn("flex flex-wrap gap-2", className)} role="toolbar" aria-label="Task filters">
       {filters.map((filter) => (
-        <Button
+<Button
           key={filter.key}
+          ref={(el) => (filterRefs.current[index] = el)}
           variant={activeFilter === filter.key ? "primary" : "ghost"}
           size="sm"
           onClick={() => onFilterChange(filter.key)}
-          className="flex items-center gap-2"
+          onKeyDown={(e) => handleKeyDown(e, index)}
+          className="flex items-center gap-2 focus:ring-2 focus:ring-primary/50 focus:outline-none"
+          tabIndex={index === focusedIndex ? 0 : -1}
+          role="button"
+          aria-pressed={activeFilter === filter.key}
+          aria-label={`Filter by ${filter.label}`}
         >
           <ApperIcon name={filter.icon} size={14} />
           {filter.label}

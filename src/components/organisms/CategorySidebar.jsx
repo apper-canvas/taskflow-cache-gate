@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { cn } from "@/utils/cn";
-import Button from "@/components/atoms/Button";
+import React, { useEffect, useRef, useState } from "react";
 import ApperIcon from "@/components/ApperIcon";
-import CategoryPill from "@/components/molecules/CategoryPill";
-import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import CategoryPill from "@/components/molecules/CategoryPill";
+import Button from "@/components/atoms/Button";
+import { cn } from "@/utils/cn";
 
 const CategorySidebar = ({
   categories = [],
@@ -16,15 +16,22 @@ const CategorySidebar = ({
   onRetry,
   className
 }) => {
-  const [isAddingCategory, setIsAddingCategory] = useState(false);
+const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [selectedColor, setSelectedColor] = useState("#5B5FDE");
+  const [focusedCategoryIndex, setFocusedCategoryIndex] = useState(-1);
+  const [focusedColorIndex, setFocusedColorIndex] = useState(0);
 
   const predefinedColors = [
     "#5B5FDE", "#8B5CF6", "#F59E0B", "#10B981", 
     "#EF4444", "#3B82F6", "#F97316", "#8B5A2B",
     "#EC4899", "#06B6D4", "#84CC16", "#6366F1"
   ];
+
+  const categoryRefs = useRef([]);
+  const colorRefs = useRef([]);
+  const addInputRef = useRef(null);
+  const allTasksRef = useRef(null);
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) return;
@@ -39,13 +46,69 @@ const CategorySidebar = ({
     setIsAddingCategory(false);
   };
 
-  const handleKeyDown = (e) => {
+const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       handleAddCategory();
     } else if (e.key === "Escape") {
       setIsAddingCategory(false);
       setNewCategoryName("");
       setSelectedColor("#5B5FDE");
+    }
+  };
+
+  const handleCategoryKeyDown = (e, index) => {
+    switch (e.key) {
+      case 'ArrowUp':
+        e.preventDefault();
+        const prevIndex = index === -1 ? categories.length - 1 : index - 1;
+        setFocusedCategoryIndex(prevIndex);
+        if (prevIndex === -1) {
+          allTasksRef.current?.focus();
+        } else {
+          categoryRefs.current[prevIndex]?.focus();
+        }
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        const nextIndex = index === categories.length - 1 ? -1 : index + 1;
+        setFocusedCategoryIndex(nextIndex);
+        if (nextIndex === -1) {
+          allTasksRef.current?.focus();
+        } else {
+          categoryRefs.current[nextIndex]?.focus();
+        }
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        if (index === -1) {
+          onCategorySelect(null);
+        } else {
+          onCategorySelect(categories[index].Id);
+        }
+        break;
+    }
+  };
+
+  const handleColorKeyDown = (e, index) => {
+    switch (e.key) {
+      case 'ArrowRight':
+        e.preventDefault();
+        const nextColorIndex = (index + 1) % predefinedColors.length;
+        setFocusedColorIndex(nextColorIndex);
+        colorRefs.current[nextColorIndex]?.focus();
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        const prevColorIndex = index === 0 ? predefinedColors.length - 1 : index - 1;
+        setFocusedColorIndex(prevColorIndex);
+        colorRefs.current[prevColorIndex]?.focus();
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        setSelectedColor(predefinedColors[index]);
+        break;
     }
   };
 
@@ -85,15 +148,21 @@ const CategorySidebar = ({
         </div>
 
         {/* All Tasks */}
-        <button
+<button
+          ref={allTasksRef}
           onClick={() => onCategorySelect(null)}
+          onKeyDown={(e) => handleCategoryKeyDown(e, -1)}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-            "hover:bg-gray-50 active:scale-95",
+            "hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50",
             !selectedCategory
               ? "bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg"
               : "text-gray-700"
           )}
+          tabIndex={0}
+          role="button"
+          aria-pressed={!selectedCategory}
+          aria-label={`All Tasks - ${categories.reduce((total, cat) => total + cat.taskCount, 0)} tasks`}
         >
           <ApperIcon name="Inbox" size={16} />
           <span>All Tasks</span>
@@ -110,13 +179,15 @@ const CategorySidebar = ({
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         <div className="p-4 space-y-2">
-          {categories.map((category) => (
+{categories.map((category, index) => (
             <button
               key={category.Id}
+              ref={(el) => (categoryRefs.current[index] = el)}
               onClick={() => onCategorySelect(category.Id)}
+              onKeyDown={(e) => handleCategoryKeyDown(e, index)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                "hover:bg-gray-50 active:scale-95",
+                "hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50",
                 selectedCategory === category.Id
                   ? "shadow-lg text-white"
                   : "text-gray-700"
@@ -124,10 +195,15 @@ const CategorySidebar = ({
               style={{
                 backgroundColor: selectedCategory === category.Id ? category.color : undefined
               }}
+              tabIndex={0}
+              role="button"
+              aria-pressed={selectedCategory === category.Id}
+              aria-label={`${category.name} category - ${category.taskCount} tasks`}
             >
               <div 
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: category.color }}
+                aria-hidden="true"
               />
               <span className="flex-1 text-left truncate">{category.name}</span>
               <span className={cn(
@@ -143,28 +219,36 @@ const CategorySidebar = ({
 
           {isAddingCategory && (
             <div className="bg-gray-50 rounded-lg p-3 space-y-3 animate-scale-in">
-              <input
+<input
+                ref={addInputRef}
                 type="text"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Category name..."
-                className="w-full px-2 py-1.5 text-sm bg-white border border-gray-200 rounded focus:outline-none focus:border-primary"
+                className="w-full px-2 py-1.5 text-sm bg-white border border-gray-200 rounded focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
                 autoFocus
+                aria-label="Category name"
               />
               
               <div className="space-y-2">
                 <label className="text-xs text-gray-600 font-medium">Color:</label>
                 <div className="grid grid-cols-4 gap-2">
-                  {predefinedColors.map((color) => (
+{predefinedColors.map((color, colorIndex) => (
                     <button
                       key={color}
+                      ref={(el) => (colorRefs.current[colorIndex] = el)}
                       onClick={() => setSelectedColor(color)}
+                      onKeyDown={(e) => handleColorKeyDown(e, colorIndex)}
                       className={cn(
-                        "w-6 h-6 rounded-full transition-all duration-200 hover:scale-110",
+                        "w-6 h-6 rounded-full transition-all duration-200 hover:scale-110 focus:scale-110",
+                        "focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1",
                         selectedColor === color && "ring-2 ring-gray-300 ring-offset-1"
                       )}
                       style={{ backgroundColor: color }}
+                      tabIndex={colorIndex === focusedColorIndex ? 0 : -1}
+                      aria-label={`Select color ${color}`}
+                      aria-pressed={selectedColor === color}
                     />
                   ))}
                 </div>

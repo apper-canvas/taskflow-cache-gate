@@ -49,12 +49,27 @@ const QuickAddBar = ({ onAddTask, className, placeholder = "Add a new task..." }
     setIsExpanded(false);
   };
 
-  const handleKeyDown = (e) => {
+const handleKeyDown = (e) => {
     if (e.key === "Escape") {
       setTitle("");
       setIsExpanded(false);
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e);
     }
   };
+
+  const handleGlobalKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+      e.preventDefault();
+      document.querySelector('input[placeholder*="Add a new task"]')?.focus();
+    }
+  };
+
+  React.useEffect(() => {
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   return (
     <div className={cn("w-full", className)}>
@@ -65,31 +80,40 @@ const QuickAddBar = ({ onAddTask, className, placeholder = "Add a new task..." }
             size={16} 
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
           />
-          <Input
+<Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onFocus={() => setIsExpanded(true)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="pl-10 py-3"
+            className="pl-10 py-3 focus:ring-2 focus:ring-primary/50"
+            aria-label="Add new task"
+            aria-describedby={isExpanded && title ? "quick-add-help" : undefined}
           />
         </div>
-        <Button 
+<Button 
           type="submit" 
           disabled={!title.trim()}
-          className="px-6 py-3"
+          className="px-6 py-3 focus:ring-2 focus:ring-primary/50"
+          aria-label="Add task"
         >
           Add
         </Button>
       </form>
       
-      {isExpanded && title && (
-        <div className="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-gray-600 animate-slide-right">
+{isExpanded && title && (
+        <div 
+          id="quick-add-help"
+          className="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-gray-600 animate-slide-right"
+          role="region"
+          aria-label="Smart parsing help"
+        >
           <p className="font-medium mb-1">Smart parsing detected:</p>
           <ul className="space-y-1 text-gray-500">
             <li>• Use "urgent", "high", or "!!" for high priority</li>
             <li>• Use "today" or "tomorrow" for due dates</li>
             <li>• Use "low" or "later" for low priority</li>
+            <li>• Press Ctrl/Cmd + Enter to quickly add</li>
           </ul>
         </div>
       )}
