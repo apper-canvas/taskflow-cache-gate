@@ -40,14 +40,36 @@ const TasksPage = () => {
       setLoading(true);
       setError(null);
       
-      const [tasksData, categoriesData, statsData] = await Promise.all([
+const [tasksData, categoriesData, statsData] = await Promise.all([
         taskService.getAll(),
         categoryService.getAll(),
         taskService.getStats()
       ]);
       
-      setTasks(tasksData);
-      setCategories(categoriesData);
+      // Transform field names for UI compatibility
+      const transformedTasks = tasksData.map(task => ({
+        ...task,
+        title: task.title_c,
+        description: task.description_c,
+        categoryId: task.category_id_c,
+        priority: task.priority_c,
+        dueDate: task.due_date_c,
+        completed: task.completed_c,
+        completedAt: task.completed_at_c,
+        createdAt: task.created_at_c,
+        order: task.order_c
+      }));
+      
+      const transformedCategories = categoriesData.map(category => ({
+        ...category,
+        name: category.name_c || category.Name,
+        color: category.color_c,
+        taskCount: category.task_count_c,
+        order: category.order_c
+      }));
+      
+      setTasks(transformedTasks);
+      setCategories(transformedCategories);
       setStats(statsData);
     } catch (err) {
       setError(err.message);
@@ -58,18 +80,51 @@ const TasksPage = () => {
   };
 
   // Task operations
-  const handleAddTask = async (taskData) => {
+const handleAddTask = async (taskData) => {
     try {
-      const newTask = await taskService.create(taskData);
-      setTasks(prev => [newTask, ...prev]);
+      // Transform field names for database
+      const dbTaskData = {
+        title: taskData.title,
+        description: taskData.description,
+        category_id_c: taskData.categoryId,
+        priority: taskData.priority,
+        due_date_c: taskData.dueDate
+      };
+      
+      const newTask = await taskService.create(dbTaskData);
+      
+      // Transform back for UI
+      const transformedTask = {
+        ...newTask,
+        title: newTask.title_c,
+        description: newTask.description_c,
+        categoryId: newTask.category_id_c,
+        priority: newTask.priority_c,
+        dueDate: newTask.due_date_c,
+        completed: newTask.completed_c,
+        completedAt: newTask.completed_at_c,
+        createdAt: newTask.created_at_c,
+        order: newTask.order_c
+      };
+      
+      setTasks(prev => [transformedTask, ...prev]);
       
       // Update stats and categories
       const [statsData, categoriesData] = await Promise.all([
         taskService.getStats(),
         categoryService.getAll()
       ]);
+      
+      const transformedCategories = categoriesData.map(category => ({
+        ...category,
+        name: category.name_c || category.Name,
+        color: category.color_c,
+        taskCount: category.task_count_c,
+        order: category.order_c
+      }));
+      
       setStats(statsData);
-      setCategories(categoriesData);
+      setCategories(transformedCategories);
       
       toast.success("Task created successfully!");
     } catch (err) {
@@ -77,18 +132,51 @@ const TasksPage = () => {
     }
   };
 
-  const handleEditTask = async (taskData) => {
+const handleEditTask = async (taskData) => {
     try {
-      const updatedTask = await taskService.update(editingTask.Id, taskData);
-      setTasks(prev => prev.map(t => t.Id === updatedTask.Id ? updatedTask : t));
+      // Transform field names for database
+      const dbTaskData = {
+        title: taskData.title,
+        description: taskData.description,
+        category_id_c: taskData.categoryId,
+        priority: taskData.priority,
+        due_date_c: taskData.dueDate
+      };
+      
+      const updatedTask = await taskService.update(editingTask.Id, dbTaskData);
+      
+      // Transform back for UI
+      const transformedTask = {
+        ...updatedTask,
+        title: updatedTask.title_c,
+        description: updatedTask.description_c,
+        categoryId: updatedTask.category_id_c,
+        priority: updatedTask.priority_c,
+        dueDate: updatedTask.due_date_c,
+        completed: updatedTask.completed_c,
+        completedAt: updatedTask.completed_at_c,
+        createdAt: updatedTask.created_at_c,
+        order: updatedTask.order_c
+      };
+      
+      setTasks(prev => prev.map(t => t.Id === transformedTask.Id ? transformedTask : t));
       
       // Update stats and categories
       const [statsData, categoriesData] = await Promise.all([
         taskService.getStats(),
         categoryService.getAll()
       ]);
+      
+      const transformedCategories = categoriesData.map(category => ({
+        ...category,
+        name: category.name_c || category.Name,
+        color: category.color_c,
+        taskCount: category.task_count_c,
+        order: category.order_c
+      }));
+      
       setStats(statsData);
-      setCategories(categoriesData);
+      setCategories(transformedCategories);
       
       toast.success("Task updated successfully!");
     } catch (err) {
@@ -96,24 +184,39 @@ const TasksPage = () => {
     }
   };
 
-  const handleToggleComplete = async (taskId) => {
+const handleToggleComplete = async (taskId) => {
     try {
       const updatedTask = await taskService.toggleComplete(taskId);
-      setTasks(prev => prev.map(t => t.Id === taskId ? updatedTask : t));
+      
+      // Transform back for UI
+      const transformedTask = {
+        ...updatedTask,
+        title: updatedTask.title_c,
+        description: updatedTask.description_c,
+        categoryId: updatedTask.category_id_c,
+        priority: updatedTask.priority_c,
+        dueDate: updatedTask.due_date_c,
+        completed: updatedTask.completed_c,
+        completedAt: updatedTask.completed_at_c,
+        createdAt: updatedTask.created_at_c,
+        order: updatedTask.order_c
+      };
+      
+      setTasks(prev => prev.map(t => t.Id === taskId ? transformedTask : t));
       
       // Update stats
       const statsData = await taskService.getStats();
       setStats(statsData);
       
       toast.success(
-        updatedTask.completed ? "Task completed! 🎉" : "Task marked as incomplete"
+        transformedTask.completed ? "Task completed! 🎉" : "Task marked as incomplete"
       );
     } catch (err) {
       toast.error("Failed to update task");
     }
   };
 
-  const handleDeleteTask = async (taskId) => {
+const handleDeleteTask = async (taskId) => {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
     
     try {
@@ -125,8 +228,17 @@ const TasksPage = () => {
         taskService.getStats(),
         categoryService.getAll()
       ]);
+      
+      const transformedCategories = categoriesData.map(category => ({
+        ...category,
+        name: category.name_c || category.Name,
+        color: category.color_c,
+        taskCount: category.task_count_c,
+        order: category.order_c
+      }));
+      
       setStats(statsData);
-      setCategories(categoriesData);
+      setCategories(transformedCategories);
       
       toast.success("Task deleted successfully!");
     } catch (err) {
@@ -135,10 +247,20 @@ const TasksPage = () => {
   };
 
   // Category operations
-  const handleAddCategory = async (categoryData) => {
+const handleAddCategory = async (categoryData) => {
     try {
       const newCategory = await categoryService.create(categoryData);
-      setCategories(prev => [...prev, newCategory]);
+      
+      // Transform back for UI
+      const transformedCategory = {
+        ...newCategory,
+        name: newCategory.name_c || newCategory.Name,
+        color: newCategory.color_c,
+        taskCount: newCategory.task_count_c,
+        order: newCategory.order_c
+      };
+      
+      setCategories(prev => [...prev, transformedCategory]);
       toast.success("Category created successfully!");
     } catch (err) {
       toast.error("Failed to create category");
